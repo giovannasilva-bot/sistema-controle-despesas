@@ -1,0 +1,221 @@
+UML TEXTUAL — SISTEMA DE CONTROLE DE DESPESAS PESSOAIS
+
+1. CLASSE: LANCAMENTO
+
+Responsabilidade:
+Representar uma movimentação financeira genérica do sistema.
+
+Atributos:
+
+ id
+ valor
+ categoria
+ data
+ descricao
+ forma_pagamento
+
+Métodos principais:
+
+__str__()
+__repr__()
+__eq__()
+__lt__()
+__add__()
+
+2. CLASSE: RECEITA
+
+Responsabilidade:
+Representar uma entrada de dinheiro no sistema.
+
+Herança:
+
+* Herda de Lancamento.
+
+Atributos:
+
+* Utiliza os atributos herdados de Lancamento.
+
+Métodos principais:
+
+* Utiliza os métodos herdados de Lancamento.
+
+3. CLASSE: DESPESA
+
+Responsabilidade:
+Representar uma saída de dinheiro no sistema.
+
+Herança:
+
+* Herda de Lancamento.
+
+Atributos:
+
+* Utiliza os atributos herdados de Lancamento.
+
+Métodos principais:
+
+* Utiliza os métodos herdados de Lancamento.
+* verificarLimite()
+
+4. CLASSE: CATEGORIA
+
+Responsabilidade:
+Representar e organizar as categorias utilizadas nos lançamentos financeiros.
+
+Atributos:
+
+* id
+* nome
+* tipo
+* limite_mensal
+* descricao
+
+Métodos principais:
+
+* verificarLimite()
+
+Observação:
+O atributo tipo identifica se a categoria está relacionada a uma RECEITA ou DESPESA.
+
+5. CLASSE: ORCAMENTOMENSAL
+
+Responsabilidade:
+Controlar o orçamento financeiro de um determinado mês e seus respectivos lançamentos.
+
+Atributos:
+
+* mes
+* ano
+* orcamento_total
+* lancamentos
+
+Métodos principais:
+
+* adicionarLancamento()
+* calcularReceitas()
+* calcularDespesas()
+* calcularSaldo()
+* verificarDeficit()
+
+6. CLASSE: ALERTA
+
+Responsabilidade:
+Representar alertas gerados a partir de situações financeiras que necessitam de atenção.
+
+Atributos:
+
+* tipo
+* mensagem
+* data
+* lancamento
+
+Métodos principais:
+
+* gerarAlerta()
+* exibirAlerta()
+
+7. RELACIONAMENTOS ENTRE AS CLASSES
+
+7.1 LANCAMENTO E CATEGORIA
+
+Tipo de relacionamento:
+
+* Associação.
+
+Descrição:
+Uma Categoria pode estar relacionada a vários Lancamentos, enquanto cada Lancamento pertence a uma categoria.
+
+Multiplicidade:
+
+* Categoria: 1
+* Lancamento: 0..*
+
+Representação:
+Categoria 1 -------- 0..* Lancamento
+
+7.2 ORCAMENTOMENSAL E LANCAMENTO
+
+Tipo de relacionamento:
+
+* Associação
+
+Descrição:
+Um OrcamentoMensal pode possuir vários Lancamentos associados ao período correspondente.
+
+Multiplicidade:
+
+* OrcamentoMensal: 1
+* Lancamento: 0..*
+
+Representação:
+OrcamentoMensal 1 -------- 0..* Lancamento
+
+7.3 LANCAMENTO E ALERTA
+
+Tipo de relacionamento:
+
+* Associação.
+
+Descrição:
+Um Lancamento pode gerar zero ou mais Alertas.( quando uma situação financeira exigir atenção)
+
+Multiplicidade:
+
+* Lancamento: 1
+* Alerta: 0..*
+
+Representação:
+Lancamento 1 -------- 0..* Alerta
+
+7.4 RECEITA E LANCAMENTO
+
+Tipo de relacionamento:
+
+* Herança.
+
+Descrição:
+A classe Receita herda as características e comportamentos definidos na classe Lancamento.
+
+Representação:
+Receita --------|> Lancamento
+
+7.5 DESPESA E LANCAMENTO
+
+Tipo de relacionamento:
+
+* Herança.
+
+Descrição:
+A classe Despesa herda as características e comportamentos definidos na classe Lancamento.
+
+Representação:
+Despesa --------|> Lancamento
+
+8. VISÃO GERAL DOS RELACIONAMENTOS
+
+   ```
+                     Lancamento
+                    /          \
+                   /            \
+                  /              \
+             Receita            Despesa
+   ```
+
+Categoria 1 -------- 0..* Lancamento
+
+OrcamentoMensal 1 -------- 0..* Lancamento
+
+Lancamento 1 -------- 0..* Alerta
+
+9. CONCEITOS DE POO
+
+O projeto utilizará os seguintes conceitos de Programação Orientada a Objetos:
+
+* Classes: representam as entidades do sistema.
+* Objetos: são instâncias das classes criadas durante a execução do sistema.
+* Encapsulamento: organização dos atributos e métodos dentro das classes.
+* Herança: Receita e Despesa herdam de Lancamento.
+* Polimorfismo: poderá ser utilizado para permitir comportamentos específicos de objetos derivados de Lancamento.
+* Abstração: representação apenas das características e comportamentos necessários para o funcionamento do sistema.
+
+Os conceitos acima representam a estrutura planejada para o desenvolvimento do projeto e não significam que todos já estejam implementados nesta etapa.

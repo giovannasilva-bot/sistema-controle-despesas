@@ -14,25 +14,25 @@ O projeto será desenvolvido inicialmente como uma aplicação de linha de coman
 
 O projeto tem como principais objetivos:
 
-* Registrar receitas e despesas;
-* Organizar lançamentos por categorias;
-* Controlar o orçamento mensal;
-* Calcular receitas, despesas e saldo disponível;
-* Controlar limites de gastos por categoria;
-* Gerar alertas financeiros;
-* Gerar relatórios e estatísticas;
-* Aplicar conceitos de Programação Orientada a Objetos;
-* Utilizar testes automatizados para validar as funcionalidades.
+- Registrar receitas e despesas;
+- Organizar lançamentos por categorias;
+- Controlar o orçamento mensal;
+- Calcular receitas, despesas e saldo disponível;
+- Controlar limites de gastos por categoria;
+- Gerar alertas financeiros;
+- Gerar relatórios e estatísticas;
+- Aplicar conceitos de Programação Orientada a Objetos;
+- Utilizar testes automatizados para validar as funcionalidades.
 
 ## 3. Tecnologias
 
-* Python
-* Programação Orientada a Objetos (POO)
-* JSON
-* Pytest
-* Git
-* GitHub
-* Interface de linha de comando (CLI)
+- Python
+- Programação Orientada a Objetos (POO)
+- JSON
+- Pytest
+- Git
+- GitHub
+- Interface de linha de comando (CLI)
 
 ## 4. Estrutura planejada de classes
 
@@ -42,40 +42,54 @@ O sistema será organizado utilizando as seguintes classes principais:
 
 Classe base responsável por representar uma movimentação financeira.
 
-Principais informações:
+Principais atributos:
 
-* ID;
-* Valor;
-* Categoria;
-* Data;
-* Descrição;
-* Forma de pagamento.
+- ID;
+- Valor;
+- Categoria;
+- Data;
+- Descrição;
+- Forma de pagamento.
+
+Principais métodos especiais:
+
+- `__str__()`;
+- `__repr__()`;
+- `__eq__()`;
+- `__lt__()`;
+- `__add__()`.
 
 ### Receita
 
 Classe derivada de `Lancamento`, responsável por representar entradas de dinheiro.
 
+Herda os atributos e comportamentos básicos de `Lancamento`.
+
 ### Despesa
 
 Classe derivada de `Lancamento`, responsável por representar saídas de dinheiro.
+
+Além dos comportamentos herdados, poderá verificar se o gasto ultrapassa o limite definido para sua categoria.
 
 ### Categoria
 
 Representa uma categoria de receita ou despesa.
 
-Possui informações como:
+Principais atributos:
 
-* ID;
-* Nome;
-* Tipo;
-* Limite mensal;
-* Descrição.
+- ID;
+- Nome;
+- Tipo;
+- Limite mensal;
+- Descrição.
+
+A categoria poderá verificar o limite mensal de gastos quando for do tipo `DESPESA`.
 
 ### OrcamentoMensal
 
 Representa o orçamento de determinado mês.
 
-Será responsável por organizar os lançamentos do período e auxiliar no cálculo do saldo mensal.
+Será responsável por organizar os lançamentos do período e auxiliar nos cálculos de receitas, despesas, saldo disponível e déficit orçamentário.
 
 ### Alerta
 
@@ -85,14 +99,27 @@ Representa notificações geradas quando alguma regra financeira é atingida, co
 
 O sistema terá os seguintes relacionamentos principais:
 
-* `Receita` herda de `Lancamento`;
-* `Despesa` herda de `Lancamento`;
-* `Lancamento` está associado a uma `Categoria`;
-* `OrcamentoMensal` agrupa vários `Lancamentos`;
-* `Alerta` pode estar associado a um `Lancamento`;
-* `Categoria` pode possuir vários `Lancamentos`.
+- `Receita` herda de `Lancamento`;
+- `Despesa` herda de `Lancamento`;
+- Uma `Categoria` pode possuir vários `Lancamentos`;
+- Um `OrcamentoMensal` pode agrupar vários `Lancamentos`;
+- Um `Lancamento` pode gerar vários `Alertas`.
 
-## 6. Estrutura planejada do projeto
+A documentação do modelo UML está disponível nos seguintes arquivos:
+
+- `docs/uml.md` — documentação detalhada das classes, atributos, métodos e relacionamentos.
+- `docs/uml.txt` — representação textual do UML para consulta e entrega.
+- `docs/uml.png` — representação visual do diagrama UML.
+
+## 6. Conceitos de POO
+
+- Encapsulamento por meio da organização dos atributos e métodos nas classes.
+- Herança entre `Lancamento`, `Receita` e `Despesa`.
+- Polimorfismo nos comportamentos específicos das classes derivadas, conforme a implementação do projeto.
+- Abstração na representação das entidades financeiras.
+- Métodos especiais para representação, comparação e operações entre objetos.
+
+## 7. Estrutura planejada do projeto
 
 ```text
 sistema-controle-despesas/
@@ -134,58 +161,6 @@ sistema-controle-despesas/
 │   └── settings.json
 │
 └── docs/
-    └── uml.md
-```
-
-## 7. Desenvolvimento por etapas
-
-### Semana 1 — Modelagem e definição do projeto
-
-* Definição das classes;
-* Definição dos atributos e métodos;
-* Definição dos relacionamentos;
-* UML textual;
-* Estrutura inicial do projeto;
-* Criação das classes vazias com docstrings;
-* README inicial.
-
-### Semana 2 — Classes base e encapsulamento
-
-* Implementação de `Lancamento`;
-* Implementação de `Receita`;
-* Implementação de `Despesa`;
-* Implementação de `Categoria`;
-* Uso de `@property`;
-* Validações básicas;
-* Métodos especiais.
-
-### Semana 3 — Relacionamentos e persistência
-
-* Relacionamento entre lançamentos, categorias e orçamento;
-* Persistência em JSON;
-* Cálculos financeiros;
-* Primeiro relatório.
-
-### Semana 4 — Regras e alertas
-
-* Limites de categoria;
-* Alertas;
-* Validações;
-* Saldo mensal;
-* Interface CLI;
-* Testes dos principais fluxos.
-
-### Semana 5 — Relatórios e finalização
-
-* Relatórios analíticos;
-* Comparação entre meses;
-* Possível aplicação de padrão de projeto;
-* Finalização do README;
-* Testes finais;
-* Versão `v1.0`.
-
-## 8. Status atual
-
-O projeto encontra-se na etapa inicial de modelagem e estruturação, correspondente à Semana 1 do projeto de POO.
-
-Nesta etapa, o foco é definir a arquitetura do sistema e criar a estrutura inicial das classes antes da implementação das regras de negócio.
+    ├── uml.md
+    ├── uml.txt
+    └── uml.png
