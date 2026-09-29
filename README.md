@@ -1,6 +1,6 @@
 # Sistema de Controle de Despesas Pessoais
 
-Projeto desenvolvido para a disciplina de Programação Orientada a Objetos (POO) do curso de Bacharelado em Engenharia de Software da Universidade Federal do Cariri(UFCA).
+Projeto desenvolvido para a disciplina de Programação Orientada a Objetos (POO) do curso de Bacharelado em Engenharia de Software da Universidade Federal do Cariri (UFCA).
 
 ## 1. Descrição do projeto
 
