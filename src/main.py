@@ -322,7 +322,7 @@ def exibir_menu():
     print("5 - Relatório mensal")
     print("6 - Despesas por categoria")
     print("7 - Salvar dados")
-    print("0 - Salvar e sair")
+    print("0 - Sair sem salvar")
     print("=" * 42)
 
 
