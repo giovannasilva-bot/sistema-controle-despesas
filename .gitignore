@@ -10,3 +10,6 @@ __pycache__/
 
 # Cache dos testes
 .pytest_cache/
+
+# Dados gerados durante a execução
+data/
