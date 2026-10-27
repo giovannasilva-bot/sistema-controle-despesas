@@ -150,60 +150,38 @@ def carregar_dados():
         return None
 
 
+
 def adicionar_lancamento(orcamento, tipo):
-    print("\n" + "═" * 44)
-    print(f"       ✦ CADASTRO DE {tipo} ✦")
-    print("═" * 44)
+    print("\n=== CADASTRO DE LANCAMENTO ===")
 
-    valor = ler_valor("Valor: R$ ")
-    descricao = input("Descrição: ").strip()
-
-    if not descricao:
-        print("⚠ A descrição não pode ficar vazia.")
-        return
-
-    data_texto = input("Data (AAAA-MM-DD): ").strip()
-
-    try:
-        data_lancamento = date.fromisoformat(data_texto)
-    except ValueError:
-        print("⚠ Data inválida. Utilize o formato AAAA-MM-DD.")
-        return
-
-    if (
-        data_lancamento.month != orcamento.mes
-        or data_lancamento.year != orcamento.ano
-    ):
-        print("⚠ A data deve pertencer ao mês e ano do orçamento.")
-        return
-
-    # Lista as categorias já utilizadas nesse tipo de lançamento
+    # Recupera as categorias existentes para o tipo escolhido.
     categorias = {}
 
-    for lancamento in orcamento.lancamentos:
-        if lancamento.categoria.tipo == tipo:
-            categorias[lancamento.categoria.nome.casefold()] = (
-                lancamento.categoria
-            )
+    for lancamento_existente in orcamento.lancamentos:
+        categoria_existente = lancamento_existente.categoria
 
-    print("\n✦ CATEGORIAS DISPONÍVEIS ✦")
+        if categoria_existente.tipo == tipo:
+            chave = categoria_existente.nome.casefold()
+            categorias[chave] = categoria_existente
 
     lista_categorias = list(categorias.values())
 
     if lista_categorias:
-        for indice, categoria in enumerate(lista_categorias, start=1):
-            print(f"  {indice}. {categoria.nome}")
-        print(f"  {len(lista_categorias) + 1}. + Cadastrar nova categoria")
+        for indice, categoria_item in enumerate(lista_categorias, start=1):
+            print(f"  {indice}. {categoria_item.nome}")
+
+        print(f"  {len(lista_categorias) + 1}. Cadastrar nova categoria")
     else:
-        print("  Ainda não há categorias cadastradas.")
+        print("Nenhuma categoria cadastrada para esse tipo.")
 
     print("  0. Voltar ao menu")
 
-    limite_nova_categoria = len(lista_categorias) + 1
+    limite_escolha = len(lista_categorias) + 1
+
     escolha = ler_inteiro(
         "\nSelecione uma categoria: ",
         0,
-        limite_nova_categoria
+        limite_escolha
     )
 
     if escolha == 0:
@@ -217,11 +195,11 @@ def adicionar_lancamento(orcamento, tipo):
         nome_categoria = input("Nome da nova categoria: ").strip()
 
         if not nome_categoria:
-            print("⚠ O nome da categoria não pode ficar vazio.")
+            print("O nome da categoria não pode ficar vazio.")
             return
 
         if nome_categoria.casefold() in categorias:
-            print("⚠ Essa categoria já existe para esse tipo.")
+            print("Essa categoria já existe para esse tipo.")
             return
 
         limite = None
@@ -236,11 +214,11 @@ def adicionar_lancamento(orcamento, tipo):
                     limite = float(limite_texto.replace(",", "."))
 
                     if limite < 0:
-                        print("⚠ O limite não pode ser negativo.")
+                        print("O limite não pode ser negativo.")
                         return
 
                 except ValueError:
-                    print("⚠ Limite inválido.")
+                    print("Limite inválido.")
                     return
 
         categoria = Categoria(
@@ -249,33 +227,61 @@ def adicionar_lancamento(orcamento, tipo):
             limite_mensal=limite
         )
 
+    valor = ler_valor("Valor: R$ ")
+
+    if valor is None:
+        return
+
+    data_texto = input(
+        "Data (AAAA-MM-DD; Enter para hoje): "
+    ).strip()
+
+    try:
+        data_lancamento = (
+            date.fromisoformat(data_texto)
+            if data_texto
+            else date.today()
+        )
+    except ValueError:
+        print("Data inválida. Use o formato AAAA-MM-DD.")
+        return
+
+    descricao = input("Descrição: ").strip()
+
+    if not descricao:
+        print("A descrição não pode ficar vazia.")
+        return
+
     forma_pagamento = input("Forma de pagamento: ").strip()
 
     if not forma_pagamento:
-        print("⚠ A forma de pagamento não pode ficar vazia.")
+        print("A forma de pagamento não pode ficar vazia.")
         return
 
     try:
         if tipo == "RECEITA":
             lancamento = Receita(
-                valor, categoria, data_lancamento,
-                descricao, forma_pagamento
+                valor=valor,
+                categoria=categoria,
+                data=data_lancamento,
+                descricao=descricao,
+                forma_pagamento=forma_pagamento
             )
         else:
             lancamento = Despesa(
-                valor, categoria, data_lancamento,
-                descricao, forma_pagamento
+                valor=valor,
+                categoria=categoria,
+                data=data_lancamento,
+                descricao=descricao,
+                forma_pagamento=forma_pagamento
             )
 
         orcamento.adicionarLancamento(lancamento)
 
-        print("\n" + "─" * 44)
-        print("  ✓ Lançamento cadastrado com sucesso!")
-        print("─" * 44)
+        print("\nLançamento cadastrado com sucesso!")
 
     except ValueError as erro:
-        print(f"\n⚠ Não foi possível cadastrar: {erro}")
-
+        print(f"\nNão foi possível cadastrar: {erro}")
 
 
 def listar_lancamentos(orcamento):
@@ -307,8 +313,21 @@ def exibir_saldo(orcamento):
     print(f"Despesas:  R$ {orcamento.calcularDespesas():.2f}")
     print(f"Saldo:     R$ {orcamento.calcularSaldo():.2f}")
 
+
     if orcamento.verificarDeficit():
         print("Atenção: as despesas ultrapassaram o orçamento.")
+
+def exibir_alertas(orcamento):
+    print("\n=== ALERTAS DO ORÇAMENTO ===")
+
+    if not orcamento.alertas:
+        print("Nenhum alerta registrado.")
+        return
+
+    for alerta in orcamento.alertas:
+        print(f"- {alerta}")
+
+
 
 
 def exibir_menu():
@@ -321,9 +340,11 @@ def exibir_menu():
     print("4 - Consultar saldo")
     print("5 - Relatório mensal")
     print("6 - Despesas por categoria")
-    print("7 - Salvar dados")
+    print("7 - Consultar alertas")
+    print("8 - Salvar dados")
     print("0 - Sair sem salvar")
     print("=" * 42)
+
 
 
 def main():
@@ -362,6 +383,9 @@ def main():
             RelatorioService.exibir_despesas_por_categoria(orcamento)
 
         elif opcao == "7":
+            exibir_alertas(orcamento)
+
+        elif opcao == "8":
             salvar_dados(orcamento)
 
         elif opcao == "0":

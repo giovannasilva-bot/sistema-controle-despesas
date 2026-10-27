@@ -1,4 +1,5 @@
 from docs.Semana2.modelos import Receita, Despesa
+from src.models.alerta import Alerta
 
 
 class OrcamentoMensal:
@@ -16,6 +17,8 @@ class OrcamentoMensal:
         self.ano = ano
         self.orcamento_total = orcamento_total
         self.lancamentos = []
+        self.alertas = []
+
 
     def adicionarLancamento(self, lancamento):
         if not isinstance(lancamento, (Receita, Despesa)):
@@ -25,6 +28,40 @@ class OrcamentoMensal:
             raise ValueError("O lançamento deve pertencer ao mês e ano do orçamento.")
 
         self.lancamentos.append(lancamento)
+
+        if isinstance(lancamento, Despesa):
+            if lancamento.valor > 500:
+                self.alertas.append(
+                    Alerta(
+                        "ALTO VALOR",
+                        f"Despesa acima de R$ 500,00: R$ {lancamento.valor:.2f}",
+                        lancamento.data,
+                        lancamento
+                    )
+                )
+
+            limite = lancamento.categoria.limite_mensal
+
+            if limite is not None:
+                total_categoria = sum(
+                    item.valor
+                    for item in self.lancamentos
+                    if isinstance(item, Despesa)
+                    and item.categoria.nome == lancamento.categoria.nome
+                    and item.categoria.tipo == lancamento.categoria.tipo
+                )
+
+                if total_categoria > limite:
+                    self.alertas.append(
+                        Alerta(
+                            "LIMITE EXCEDIDO",
+                            f"Limite da categoria {lancamento.categoria.nome} excedido: "
+                            f"R$ {total_categoria:.2f} de R$ {limite:.2f}",
+                            lancamento.data,
+                            lancamento
+                        )
+                    )
+
 
     def calcularReceitas(self):
         return sum(
