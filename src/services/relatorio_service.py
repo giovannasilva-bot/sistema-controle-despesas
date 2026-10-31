@@ -58,3 +58,86 @@ class RelatorioService:
 
         for categoria, valor in despesas.items():
             print(f"{categoria}: R$ {valor:.2f}")
+
+    @staticmethod
+    def gerar_percentuais_por_categoria(orcamento: OrcamentoMensal):
+        despesas = RelatorioService.gerar_despesas_por_categoria(orcamento)
+        total_despesas = orcamento.calcularDespesas()
+
+        if total_despesas == 0:
+            return {categoria: 0 for categoria in despesas}
+
+        return {
+            categoria: (valor / total_despesas) * 100
+            for categoria, valor in despesas.items()
+        }
+
+    @staticmethod
+    def gerar_top_categorias(orcamento: OrcamentoMensal, quantidade=5):
+        despesas = RelatorioService.gerar_despesas_por_categoria(orcamento)
+
+        return sorted(
+            despesas.items(),
+            key=lambda item: item[1],
+            reverse=True
+        )[:quantidade]
+
+    @staticmethod
+    def gerar_media_mensal(orcamentos: list[OrcamentoMensal]):
+        if not orcamentos:
+            raise ValueError("É necessário informar pelo menos um orçamento.")
+
+        total_receitas = sum(
+            orcamento.calcularReceitas() for orcamento in orcamentos
+        )
+
+        total_despesas = sum(
+            orcamento.calcularDespesas() for orcamento in orcamentos
+        )
+
+        total_saldo = sum(
+            orcamento.calcularSaldo() for orcamento in orcamentos
+        )
+
+        quantidade = len(orcamentos)
+
+        return {
+            "quantidade_meses": quantidade,
+            "media_receitas": total_receitas / quantidade,
+            "media_despesas": total_despesas / quantidade,
+            "media_saldo": total_saldo / quantidade
+        }
+
+    @staticmethod
+    def comparar_despesas(orcamento_atual: OrcamentoMensal,
+                          orcamento_anterior: OrcamentoMensal):
+        despesas_atuais = RelatorioService.gerar_despesas_por_categoria(
+            orcamento_atual
+        )
+
+        despesas_anteriores = RelatorioService.gerar_despesas_por_categoria(
+            orcamento_anterior
+        )
+
+        categorias = set(despesas_atuais) | set(despesas_anteriores)
+        comparativo = {}
+
+        for categoria in categorias:
+            atual = despesas_atuais.get(categoria, 0)
+            anterior = despesas_anteriores.get(categoria, 0)
+
+            diferenca = atual - anterior
+
+            if anterior == 0:
+                percentual = 0 if atual == 0 else None
+            else:
+                percentual = (diferenca / anterior) * 100
+
+            comparativo[categoria] = {
+                "mes_anterior": anterior,
+                "mes_atual": atual,
+                "diferenca": diferenca,
+                "variacao_percentual": percentual
+            }
+
+        return comparativo
