@@ -1,6 +1,10 @@
-
 from datetime import date
 from pathlib import Path
+
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 from docs.Semana2.modelos import Categoria, Receita, Despesa
 from src.models.orcamento_mensal import OrcamentoMensal
@@ -16,6 +20,14 @@ CAMINHO_DADOS = (
 )
 
 repositorio = JSONRepository(CAMINHO_DADOS)
+
+# Aplicação da nova interface de linha de comando
+app = typer.Typer(
+    help="Sistema de Controle de Despesas Pessoais",
+    no_args_is_help=True
+)
+
+console = Console()
 
 
 def ler_inteiro(mensagem, minimo=None, maximo=None):
@@ -128,7 +140,8 @@ def carregar_dados():
                     categoria=categoria,
                     data=data_lancamento,
                     descricao=item["descricao"],
-                    forma_pagamento=item["forma_pagamento"]
+                    forma_pagamento=item["forma_pagamento"],
+                    _silencioso=True
                 )
             elif item["tipo"] == "DESPESA":
                 lancamento = Despesa(
@@ -136,7 +149,8 @@ def carregar_dados():
                     categoria=categoria,
                     data=data_lancamento,
                     descricao=item["descricao"],
-                    forma_pagamento=item["forma_pagamento"]
+                    forma_pagamento=item["forma_pagamento"],
+                    _silencioso=True
                 )
             else:
                 raise ValueError("Tipo de lançamento inválido no arquivo.")
@@ -327,8 +341,338 @@ def exibir_alertas(orcamento):
     for alerta in orcamento.alertas:
         print(f"- {alerta}")
 
+@app.command()
+def iniciar(
+    mes: int = typer.Option(..., "--mes", help="Mês do orçamento."),
+    ano: int = typer.Option(..., "--ano", help="Ano do orçamento."),
+    orcamento: float = typer.Option(
+        ...,
+        "--orcamento",
+        help="Valor total disponível no mês."
+    ),
+    sobrescrever: bool = typer.Option(
+        False,
+        "--sobrescrever",
+        help="Substitui um orçamento já existente."
+    )
+):
+    """Cria um novo orçamento mensal."""
+
+    if mes < 1 or mes > 12:
+        raise typer.BadParameter("O mês deve estar entre 1 e 12.")
+
+    if ano < 1:
+        raise typer.BadParameter("O ano deve ser válido.")
+
+    if orcamento < 0:
+        raise typer.BadParameter("O orçamento não pode ser negativo.")
+
+    if repositorio.caminho.exists() and not sobrescrever:
+        console.print(
+            "[yellow]Já existe um orçamento cadastrado.[/yellow]"
+        )
+        console.print(
+            "Use --sobrescrever se realmente deseja substituí-lo."
+        )
+        raise typer.Exit(code=1)
+
+    novo_orcamento = OrcamentoMensal(mes, ano, orcamento)
+
+    salvar_dados(novo_orcamento)
+
+    console.print(
+        Panel(
+            f"Orçamento de [bold green]R$ {orcamento:.2f}[/bold green] "
+            f"configurado para {mes:02d}/{ano}.",
+            title="Configuração concluída",
+            border_style="green"
+        )
+    )
+
+@app.command()
+def status():
+    """Exibe um resumo do orçamento cadastrado."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print(
+            "[yellow]Nenhum orçamento cadastrado. "
+            "Execute o comando iniciar.[/yellow]"
+        )
+        raise typer.Exit(code=1)
+
+    tabela = Table(title="Resumo financeiro")
+
+    tabela.add_column("Informação", style="cyan")
+    tabela.add_column("Valor", justify="right")
+
+    tabela.add_row("Período", f"{orcamento.mes:02d}/{orcamento.ano}")
+    tabela.add_row("Orçamento", f"R$ {orcamento.orcamento_total:.2f}")
+    tabela.add_row("Receitas", f"R$ {orcamento.calcularReceitas():.2f}")
+    tabela.add_row("Despesas", f"R$ {orcamento.calcularDespesas():.2f}")
+    tabela.add_row("Saldo", f"R$ {orcamento.calcularSaldo():.2f}")
+
+    console.print(tabela)
+
+    if orcamento.verificarDeficit():
+        console.print(
+            "[bold red]Atenção: o orçamento está em déficit![/bold red]"
+        )
+
+@app.command()
+def adicionar_receita(
+    valor: float = typer.Option(..., "--valor", help="Valor da receita."),
+    categoria: str = typer.Option(..., "--categoria", help="Categoria da receita."),
+    descricao: str = typer.Option(..., "--descricao", help="Descrição da receita."),
+    data_lancamento: str | None = typer.Option(
+        None, "--data", help="Data no formato AAAA-MM-DD."
+    ),
+    forma_pagamento: str = typer.Option(
+        "Dinheiro", "--forma-pagamento", help="Forma de recebimento."
+    )
+):
+    """Cadastra uma nova receita."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print("[red]Nenhum orçamento cadastrado.[/red]")
+        raise typer.Exit(code=1)
+
+    if valor <= 0:
+        raise typer.BadParameter("O valor deve ser maior que zero.")
+
+    if not categoria.strip() or not descricao.strip():
+        raise typer.BadParameter("Categoria e descrição são obrigatórias.")
+
+    try:
+        data = (
+            date.fromisoformat(data_lancamento)
+            if data_lancamento
+            else date.today()
+        )
+    except ValueError:
+        raise typer.BadParameter("Data inválida. Use AAAA-MM-DD.")
+
+    categoria_existente = next(
+        (
+            lancamento.categoria
+            for lancamento in orcamento.lancamentos
+            if lancamento.categoria.tipo == "RECEITA"
+            and lancamento.categoria.nome.casefold() == categoria.casefold()
+        ),
+        None
+    )
+
+    if categoria_existente is None:
+        categoria_existente = Categoria(
+            nome=categoria.strip(),
+            tipo="RECEITA"
+        )
+
+    try:
+        receita = Receita(
+            valor=valor,
+            categoria=categoria_existente,
+            data=data,
+            descricao=descricao.strip(),
+            forma_pagamento=forma_pagamento.strip()
+        )
+
+        orcamento.adicionarLancamento(receita)
+        salvar_dados(orcamento)
+
+        console.print(
+            Panel(
+                f"Receita de [green]R$ {valor:.2f}[/green] cadastrada!",
+                title="Cadastro concluído",
+                border_style="green"
+            )
+        )
+
+    except ValueError as erro:
+        raise typer.BadParameter(str(erro))
+
+@app.command()
+def adicionar_despesa(
+    valor: float = typer.Option(..., "--valor", help="Valor da despesa."),
+    categoria: str = typer.Option(..., "--categoria", help="Categoria da despesa."),
+    descricao: str = typer.Option(..., "--descricao", help="Descrição da despesa."),
+    data_lancamento: str | None = typer.Option(
+        None, "--data", help="Data no formato AAAA-MM-DD."
+    ),
+    forma_pagamento: str = typer.Option(
+        "Dinheiro", "--forma-pagamento", help="Forma de pagamento."
+    ),
+    limite_mensal: float | None = typer.Option(
+        None, "--limite-mensal", help="Limite mensal da categoria."
+    )
+):
+    """Cadastra uma nova despesa."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print("[red]Nenhum orçamento cadastrado.[/red]")
+        raise typer.Exit(code=1)
+
+    if valor <= 0:
+        raise typer.BadParameter("O valor deve ser maior que zero.")
+
+    if not categoria.strip() or not descricao.strip():
+        raise typer.BadParameter("Categoria e descrição são obrigatórias.")
+
+    if limite_mensal is not None and limite_mensal < 0:
+        raise typer.BadParameter("O limite mensal não pode ser negativo.")
+
+    try:
+        data = (
+            date.fromisoformat(data_lancamento)
+            if data_lancamento
+            else date.today()
+        )
+    except ValueError:
+        raise typer.BadParameter("Data inválida. Use AAAA-MM-DD.")
+
+    categoria_existente = next(
+        (
+            lancamento.categoria
+            for lancamento in orcamento.lancamentos
+            if lancamento.categoria.tipo == "DESPESA"
+            and lancamento.categoria.nome.casefold() == categoria.casefold()
+        ),
+        None
+    )
+
+    if categoria_existente is not None:
+        if limite_mensal is not None:
+            raise typer.BadParameter(
+                "A categoria já existe. O limite deve ser definido na criação."
+            )
+    else:
+        categoria_existente = Categoria(
+            nome=categoria.strip(),
+            tipo="DESPESA",
+            limite_mensal=limite_mensal
+        )
+
+    try:
+        despesa = Despesa(
+            valor=valor,
+            categoria=categoria_existente,
+            data=data,
+            descricao=descricao.strip(),
+            forma_pagamento=forma_pagamento.strip()
+        )
+
+        orcamento.adicionarLancamento(despesa)
+        salvar_dados(orcamento)
+
+        console.print(
+            Panel(
+                f"Despesa de [red]R$ {valor:.2f}[/red] cadastrada!",
+                title="Cadastro concluído",
+                border_style="green"
+            )
+        )
+
+        if orcamento.alertas:
+            console.print("[yellow]Verifique os alertas do orçamento.[/yellow]")
+
+    except ValueError as erro:
+        raise typer.BadParameter(str(erro))
+
+@app.command()
+def listar_lancamentos():
+    """Lista todas as receitas e despesas cadastradas."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+        raise typer.Exit(code=1)
+
+    if not orcamento.lancamentos:
+        console.print("[yellow]Nenhum lançamento cadastrado.[/yellow]")
+        return
+
+    tabela = Table(title="Lançamentos cadastrados")
+
+    tabela.add_column("Data", style="cyan")
+    tabela.add_column("Tipo")
+    tabela.add_column("Categoria")
+    tabela.add_column("Descrição")
+    tabela.add_column("Valor", justify="right")
+    tabela.add_column("Forma de pagamento")
+
+    for lancamento in sorted(orcamento.lancamentos):
+        tipo = (
+            "[green]Receita[/green]"
+            if isinstance(lancamento, Receita)
+            else "[red]Despesa[/red]"
+        )
+
+        tabela.add_row(
+            lancamento.data.strftime("%d/%m/%Y"),
+            tipo,
+            lancamento.categoria.nome,
+            lancamento.descricao,
+            f"R$ {lancamento.valor:.2f}",
+            lancamento.forma_pagamento
+        )
+
+    console.print(tabela)
+
+@app.command()
+def consultar_alertas():
+    """Exibe os alertas registrados no orçamento."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+        raise typer.Exit(code=1)
+
+    if not orcamento.alertas:
+        console.print("[green]Nenhum alerta registrado.[/green]")
+        return
+
+    tabela = Table(title="Alertas do orçamento")
+
+    tabela.add_column("Nº", style="cyan", justify="center")
+    tabela.add_column("Alerta", style="yellow")
+
+    for numero, alerta in enumerate(orcamento.alertas, start=1):
+        tabela.add_row(str(numero), str(alerta))
+
+    console.print(tabela)
 
 
+@app.command()
+def relatorio_mensal():
+    """Exibe o relatório financeiro mensal."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+        raise typer.Exit(code=1)
+
+    RelatorioService.exibir_relatorio_mensal(orcamento)
+
+
+@app.command()
+def despesas_por_categoria():
+    """Exibe as despesas agrupadas por categoria."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+        raise typer.Exit(code=1)
+
+    RelatorioService.exibir_despesas_por_categoria(orcamento)
 
 def exibir_menu():
     print("\n" + "=" * 42)
@@ -403,4 +747,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    app()

@@ -8,12 +8,19 @@ from datetime import date
 def log_operacao(funcao_original):
     """Decorator para registrar (log) a criação de lançamentos financeiros."""
     def embrulho(*args, **kwargs):
-        print("\n" + "-"*50)
+        silencioso = kwargs.pop("_silencioso", False)
+
+        if silencioso:
+            return funcao_original(*args, **kwargs)
+
+        print("\n" + "-" * 50)
         print("[Log] 📝 Validando e registrando nova operação...")
         resultado = funcao_original(*args, **kwargs)
         print("[Log] ✅ Operação registrada com sucesso.")
-        print("-"*50)
+        print("-" * 50)
+
         return resultado
+
     return embrulho
 
 # ---------------------------------------------------------
@@ -109,15 +116,40 @@ class Lancamento:
 
 class Receita(Lancamento):
     @log_operacao
-    def __init__(self, valor, categoria, data, descricao, forma_pagamento="Dinheiro"):
+    def __init__(
+        self,
+        valor,
+        categoria,
+        data,
+        descricao,
+        forma_pagamento="Dinheiro"
+
+    ):
         if categoria.tipo != "RECEITA":
-            raise ValueError("Receitas exigem uma categoria do tipo RECEITA.")
-        super().__init__(valor, categoria, data, descricao, forma_pagamento)
+            raise ValueError(
+                "Receitas exigem uma categoria do tipo RECEITA."
+            )
+
+        super().__init__(
+            valor,
+            categoria,
+            data,
+            descricao,
+            forma_pagamento
+        )
 
 
 class Despesa(Lancamento):
     @log_operacao
-    def __init__(self, valor, categoria, data, descricao, forma_pagamento):
+    def __init__(
+        self,
+        valor,
+        categoria,
+        data,
+        descricao,
+        forma_pagamento
+
+    ):
         if categoria.tipo != "DESPESA":
             raise ValueError("Despesas exigem uma categoria do tipo DESPESA.")
         super().__init__(valor, categoria, data, descricao, forma_pagamento)
