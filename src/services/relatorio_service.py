@@ -17,6 +17,10 @@ class RelatorioService:
             "saldo": saldo,
             "deficit": orcamento.verificarDeficit()
         }
+    
+    @staticmethod
+    def gerar_com_estrategia(estrategia, orcamento):
+        return estrategia.gerar(orcamento)
 
     @staticmethod
     def gerar_despesas_por_categoria(orcamento: OrcamentoMensal):
