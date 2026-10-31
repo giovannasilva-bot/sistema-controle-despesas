@@ -1,4 +1,9 @@
 from src.models.orcamento_mensal import OrcamentoMensal
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+console = Console()
 
 
 class RelatorioService:
@@ -41,27 +46,39 @@ class RelatorioService:
     def exibir_relatorio_mensal(orcamento: OrcamentoMensal):
         relatorio = RelatorioService.gerar_relatorio_mensal(orcamento)
 
-        print(f"\nRELATÓRIO FINANCEIRO - {relatorio['mes']:02d}/{relatorio['ano']}")
-        print("-" * 40)
-        print(f"Orçamento total: R$ {relatorio['orcamento_total']:.2f}")
-        print(f"Receitas:        R$ {relatorio['receitas']:.2f}")
-        print(f"Despesas:        R$ {relatorio['despesas']:.2f}")
-        print(f"Saldo:           R$ {relatorio['saldo']:.2f}")
-        print(f"Déficit:         {'Sim' if relatorio['deficit'] else 'Não'}")
+        conteudo = (
+            f"[bold]Orçamento total:[/bold] R$ {relatorio['orcamento_total']:.2f}\n"
+            f"[bold]Receitas:[/bold]        R$ {relatorio['receitas']:.2f}\n"
+            f"[bold]Despesas:[/bold]        R$ {relatorio['despesas']:.2f}\n"
+            f"[bold]Saldo:[/bold]           R$ {relatorio['saldo']:.2f}\n"
+            f"[bold]Déficit:[/bold]         {'Sim' if relatorio['deficit'] else 'Não'}"
+        )
+
+        console.print(
+            Panel(
+                conteudo,
+                title=f"Relatório financeiro - {relatorio['mes']:02d}/{relatorio['ano']}",
+                border_style="blue"
+            )
+        )
 
     @staticmethod
     def exibir_despesas_por_categoria(orcamento: OrcamentoMensal):
         despesas = RelatorioService.gerar_despesas_por_categoria(orcamento)
 
-        print("\nDESPESAS POR CATEGORIA")
-        print("-" * 40)
-
         if not despesas:
-            print("Nenhuma despesa cadastrada.")
+            console.print("[yellow]Nenhuma despesa cadastrada.[/yellow]")
             return
 
+        tabela = Table(title="Despesas por categoria")
+
+        tabela.add_column("Categoria", style="cyan")
+        tabela.add_column("Valor", justify="right", style="green")
+
         for categoria, valor in despesas.items():
-            print(f"{categoria}: R$ {valor:.2f}")
+            tabela.add_row(categoria, f"R$ {valor:.2f}")
+
+        console.print(tabela)
 
     @staticmethod
     def gerar_percentuais_por_categoria(orcamento: OrcamentoMensal):
