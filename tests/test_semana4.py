@@ -12,7 +12,8 @@ def test_exibir_menu(capsys):
     assert "Adicionar despesa" in resultado
     assert "Listar lançamentos" in resultado
     assert "Salvar dados" in resultado
-    assert "Sair sem salvar" in resultado
+    assert "Salvar e sair" in resultado
+    assert "Encerrar sem salvar" in resultado
 
 
 def test_ler_valor_positivo(monkeypatch):

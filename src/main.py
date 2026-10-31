@@ -342,7 +342,8 @@ def exibir_menu():
     print("6 - Despesas por categoria")
     print("7 - Consultar alertas")
     print("8 - Salvar dados")
-    print("0 - Sair sem salvar")
+    print("9 - Salvar e sair")
+    print("0 - Encerrar sem salvar")
     print("=" * 42)
 
 
@@ -388,9 +389,13 @@ def main():
         elif opcao == "8":
             salvar_dados(orcamento)
 
-        elif opcao == "0":
+        elif opcao == "9":
             salvar_dados(orcamento)
             print("Programa encerrado.")
+            break
+
+        elif opcao == "0":
+            print("Programa encerrado sem salvar.")
             break
 
         else:
