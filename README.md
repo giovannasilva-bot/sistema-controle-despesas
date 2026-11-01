@@ -263,3 +263,124 @@ A tag `v1.0` no GitHub representa a versão final e completa do projeto para a e
 Essa versão deve conter todas as funcionalidades implementadas e testadas no sistema.
 
 As demais tags presentes no repositório representam versões anteriores do desenvolvimento do projeto.
+
+## 15. Como utilizar o sistema
+
+Após instalar as dependências e ativar o ambiente virtual, os comandos devem ser executados no terminal, a partir da pasta raiz do projeto.
+
+### Consultar os comandos disponíveis
+
+Para visualizar todas as funcionalidades disponíveis:
+
+```powershell
+python -m src.main --help
+```
+
+Para consultar as opções de um comando específico:
+
+```powershell
+python -m src.main iniciar --help
+```
+
+### Criar um orçamento mensal
+
+Para cadastrar um novo orçamento, informe o mês, o ano e o valor total disponível:
+
+```powershell
+python -m src.main iniciar --mes 11 --ano 2027 --orcamento 1500
+```
+
+O parâmetro `--sobrescrever` permite substituir um orçamento já existente. Deve ser utilizado com cuidado, pois altera os dados daquele período.
+
+### Cadastrar receitas
+
+Para adicionar uma receita, informe o valor, a categoria e a descrição:
+
+```powershell
+python -m src.main adicionar-receita --valor 2500 --categoria Salario --descricao "Salario mensal"
+```
+
+Também podem ser informados:
+
+- `--data`: data no formato AAAA-MM-DD;
+- `--forma-pagamento`: forma de recebimento. O padrão é Dinheiro.
+
+### Cadastrar despesas
+
+Para adicionar uma despesa:
+
+```powershell
+python -m src.main adicionar-despesa --valor 150 --categoria Alimentacao --descricao "Compra no supermercado"
+```
+
+Também podem ser informados:
+
+- `--data`: data no formato AAAA-MM-DD;
+- `--forma-pagamento`: forma de pagamento. O padrão é Dinheiro;
+- `--limite-mensal`: limite mensal da categoria.
+
+### Consultar informações do orçamento
+
+**Resumo financeiro:**
+
+```powershell
+python -m src.main status
+```
+
+**Listagem de receitas e despesas:**
+
+```powershell
+python -m src.main listar-lancamentos
+```
+
+**Consultar alertas registrados:**
+
+```powershell
+python -m src.main consultar-alertas
+```
+
+### Consultar relatórios
+
+**Relatório financeiro mensal:**
+
+```powershell
+python -m src.main relatorio-mensal
+```
+
+**Despesas agrupadas por categoria:**
+
+```powershell
+python -m src.main despesas-por-categoria
+```
+
+**Despesas agrupadas por forma de pagamento:**
+
+```powershell
+python -m src.main despesas-por-forma-pagamento
+```
+
+### Análises históricas
+
+**Média financeira dos orçamentos cadastrados:**
+
+```powershell
+python -m src.main media-mensal
+```
+
+**Identificar o mês mais econômico:**
+
+```powershell
+python -m src.main mes-mais-economico
+```
+
+**Comparar as despesas dos últimos meses cadastrados:**
+
+```powershell
+python -m src.main comparar-despesas
+```
+
+### Observação
+
+Os comandos que trabalham com um orçamento específico podem solicitar a seleção do período desejado. Já as análises históricas consideram os orçamentos cadastrados.
+
+Os exemplos de cadastro são ilustrativos. Antes de executar, verifique os dados para evitar registros duplicados ou alterações indesejadas.
