@@ -15,20 +15,20 @@ Os dados são armazenados em arquivos JSON, possibilitando salvar e recuperar as
 ## 2. Funcionalidades
 
 - Cadastro de receitas e despesas;
-- Organiza??o dos lan?amentos por categorias;
-- Cria??o e sele??o de m?ltiplos or?amentos mensais;
-- Defini??o de or?amento mensal;
-- C?lculo de receitas, despesas e saldo;
-- Verifica??o de d?ficit or?ament?rio;
+- Organização dos lançamentos por categorias;
+- Criação e seleção de múltiplos orçamentos mensais;
+- Definição de orçamento mensal;
+- Cálculo de receitas, despesas e saldo;
+- Verificação de déficit orçamentário;
 - Controle de limites de gastos por categoria;
-- Gera??o de alertas para despesas acima do valor configurado e limites de categoria excedidos;
-- Relat?rio financeiro mensal;
-- Relat?rios de despesas por categoria e forma de pagamento;
-- C?lculo do percentual de participa??o de cada categoria nas despesas;
-- Identifica??o das categorias com maiores gastos;
-- C?lculo de m?dias mensais e hist?ricas;
-- Identifica??o do m?s mais econ?mico;
-- Compara??o de despesas entre os ?ltimos meses configurados;
+- Geração de alertas para despesas acima do valor configurado e limites de categoria excedidos;
+- Relatório financeiro mensal;
+- Relatórios de despesas por categoria e forma de pagamento;
+- Cálculo do percentual de participação de cada categoria nas despesas;
+- Identificação das categorias com maiores gastos;
+- Cálculo de médias mensais e históricas;
+- Identificação do mês mais econômico;
+- Comparação de despesas entre os últimos meses configurados;
 - Salvamento e carregamento dos dados em JSON.
 
 ## 3. Tecnologias utilizadas
