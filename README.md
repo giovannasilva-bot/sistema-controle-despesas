@@ -15,18 +15,20 @@ Os dados são armazenados em arquivos JSON, possibilitando salvar e recuperar as
 ## 2. Funcionalidades
 
 - Cadastro de receitas e despesas;
-- Organização dos lançamentos por categorias;
-- Definição de orçamento mensal;
-- Cálculo de receitas, despesas e saldo;
-- Verificação de déficit orçamentário;
+- Organiza??o dos lan?amentos por categorias;
+- Cria??o e sele??o de m?ltiplos or?amentos mensais;
+- Defini??o de or?amento mensal;
+- C?lculo de receitas, despesas e saldo;
+- Verifica??o de d?ficit or?ament?rio;
 - Controle de limites de gastos por categoria;
-- Geração de alertas para despesas acima de R$ 500,00 e limites de categoria excedidos;
-- Relatório financeiro mensal;
-- Relatório de despesas por categoria;
-- Cálculo do percentual de participação de cada categoria nas despesas;
-- Identificação das categorias com maiores gastos;
-- Cálculo de médias mensais de receitas, despesas e saldo;
-- Comparação de despesas entre dois meses;
+- Gera??o de alertas para despesas acima do valor configurado e limites de categoria excedidos;
+- Relat?rio financeiro mensal;
+- Relat?rios de despesas por categoria e forma de pagamento;
+- C?lculo do percentual de participa??o de cada categoria nas despesas;
+- Identifica??o das categorias com maiores gastos;
+- C?lculo de m?dias mensais e hist?ricas;
+- Identifica??o do m?s mais econ?mico;
+- Compara??o de despesas entre os ?ltimos meses configurados;
 - Salvamento e carregamento dos dados em JSON.
 
 ## 3. Tecnologias utilizadas
@@ -135,50 +137,58 @@ A conversão dos objetos financeiros para dados que podem ser armazenados e a re
 
 O arquivo utilizado para armazenar os dados é `data/orcamento.json`. A pasta e o arquivo são criados conforme a necessidade de armazenamento.
 
+As configurações gerais do sistema são armazenadas em `settings.json` e gerenciadas pela classe `ConfiguracaoService`, localizada em `src/services/configuracao_service.py`. Entre os parâmetros configuráveis estão o valor para alertas de despesas elevadas, a quantidade de meses utilizada nas comparações e a meta percentual de economia.
+
+
 ## 10. Estrutura do projeto
 
 ```text
 sistema-controle-despesas/
-│
-├── README.md
-│
-├── src/
-│   ├── __init__.py
-│   ├── main.py
-│   │
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── alerta.py
-│   │   └── orcamento_mensal.py
-│   │
-│   ├── repositories/
-│   │   ├── __init__.py
-│   │   └── json_repository.py
-│   │
-│   └── services/
-│       ├── __init__.py
-│       ├── relatorio_service.py
-│       └── estrategias_relatorio.py
-│
-├── docs/
-│   ├── Semana1/
-│   │   ├── uml.md
-│   │   ├── uml.txt
-│   │   └── uml.png
-│   │
-│   ├── Semana2/
-│   │   ├── modelos.py
-│   │   └── teste_modelos.py
-│   │
-│   └── Semana4/
-│       └── README.md
-│
-└── tests/
-    ├── test_alertas.py
-    ├── test_estrategias_relatorio.py
-    ├── test_relatorios_analiticos.py
-    ├── test_semana3.py
-    └── test_semana4.py
+|
+|-- README.md
+|-- settings.json
+|
+|-- data/                         (criada localmente)
+|   |-- orcamento.json            (ignorado pelo Git)
+|
+|-- src/
+|   |-- __init__.py
+|   |-- main.py
+|   |
+|   |-- models/
+|   |   |-- __init__.py
+|   |   |-- alerta.py
+|   |   |-- orcamento_mensal.py
+|   |
+|   |-- repositories/
+|   |   |-- __init__.py
+|   |   |-- json_repository.py
+|   |
+|   |-- services/
+|       |-- __init__.py
+|       |-- configuracao_service.py
+|       |-- relatorio_service.py
+|       |-- estrategias_relatorio.py
+|
+|-- docs/
+|   |-- Semana1/
+|   |   |-- uml.md
+|   |   |-- uml.txt
+|   |   |-- uml.png
+|   |
+|   |-- Semana2/
+|   |   |-- modelos.py
+|   |   |-- teste_modelos.py
+|   |
+|   |-- Semana4/
+|       |-- README.md
+|
+|-- tests/
+    |-- test_alertas.py
+    |-- test_estrategias_relatorio.py
+    |-- test_relatorios_analiticos.py
+    |-- test_semana3.py
+    |-- test_semana4.py
 ```
 
 ## 11. Como executar o projeto
@@ -218,12 +228,12 @@ A aplicação apresentará o menu interativo para utilização das funcionalidad
 
 ## 12. Testes automatizados
 
-O projeto utiliza Pytest para verificar o funcionamento das funcionalidades implementadas.
+O projeto utiliza Pytest para executar os testes automatizados e verificar o funcionamento das funcionalidades implementadas.
 
-Para instalar a ferramenta de testes:
+Para instalar as dependências necessárias:
 
 ```bash
-python -m pip install pytest
+python -m pip install typer rich pytest
 ```
 
 Para executar todos os testes, utilize:
@@ -232,7 +242,7 @@ Para executar todos os testes, utilize:
 python -m pytest
 ```
 
-Os testes estão organizados na pasta `tests/` e também na documentação da Semana 2.
+Os testes automatizados estão organizados na pasta `tests/`, abrangendo os modelos, as regras de negócio, os alertas e os relatórios.
 
 ## 13. Documentação UML
 
@@ -245,3 +255,11 @@ Os arquivos referentes à modelagem UML estão disponíveis em `docs/Semana1/`:
 ---
 
 Projeto acadêmico desenvolvido para a disciplina de Programação Orientada a Objetos (POO) — Engenharia de Software, UFCA.
+
+## 14. Versionamento
+
+A tag `v1.0` no GitHub representa a versão final e completa do projeto para a entrega da disciplina.
+
+Essa versão deve conter todas as funcionalidades implementadas e testadas no sistema.
+
+As demais tags presentes no repositório representam versões anteriores do desenvolvimento do projeto.
