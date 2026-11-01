@@ -10,6 +10,7 @@ from docs.Semana2.modelos import Categoria, Receita, Despesa
 from src.models.orcamento_mensal import OrcamentoMensal
 from src.repositories.json_repository import JSONRepository
 from src.services.relatorio_service import RelatorioService
+from src.services.configuracao_service import ConfiguracaoService
 
 
 # Arquivo onde os dados serão guardados
@@ -18,6 +19,12 @@ CAMINHO_DADOS = (
     / "data"
     / "orcamento.json"
 )
+
+MESES = [
+    "Janeiro", "Fevereiro", "Março", "Abril",
+    "Maio", "Junho", "Julho", "Agosto",
+    "Setembro", "Outubro", "Novembro", "Dezembro"
+]
 
 repositorio = JSONRepository(CAMINHO_DADOS)
 
@@ -76,8 +83,9 @@ def criar_orcamento():
     return OrcamentoMensal(mes, ano, total)
 
 
-def salvar_dados(orcamento):
-    """Converte os lançamentos em dados que podem ser salvos em JSON."""
+
+def serializar_orcamento(orcamento):
+    """Converte um orçamento em um dicionário para armazenamento JSON."""
     dados = {
         "mes": orcamento.mes,
         "ano": orcamento.ano,
@@ -104,65 +112,162 @@ def salvar_dados(orcamento):
             }
         })
 
+    return dados
+
+
+def reconstruir_orcamento(dados):
+    """Reconstrói um objeto OrcamentoMensal a partir dos dados JSON."""
+    orcamento = OrcamentoMensal(
+        dados["mes"],
+        dados["ano"],
+        dados["orcamento_total"]
+    )
+
+    for item in dados["lancamentos"]:
+        info_categoria = item["categoria"]
+
+        categoria = Categoria(
+            nome=info_categoria["nome"],
+            tipo=info_categoria["tipo"],
+            limite_mensal=info_categoria["limite_mensal"],
+            descricao=info_categoria.get("descricao", "")
+        )
+
+        data_lancamento = date.fromisoformat(item["data"])
+
+        if item["tipo"] == "RECEITA":
+            lancamento = Receita(
+                valor=item["valor"],
+                categoria=categoria,
+                data=data_lancamento,
+                descricao=item["descricao"],
+                forma_pagamento=item["forma_pagamento"],
+                _silencioso=True
+            )
+        elif item["tipo"] == "DESPESA":
+            lancamento = Despesa(
+                valor=item["valor"],
+                categoria=categoria,
+                data=data_lancamento,
+                descricao=item["descricao"],
+                forma_pagamento=item["forma_pagamento"],
+                _silencioso=True
+            )
+        else:
+            raise ValueError("Tipo de lançamento inválido no arquivo.")
+
+        orcamento.adicionarLancamento(lancamento)
+
+    return orcamento
+
+
+def carregar_orcamentos():
+    """Carrega todos os orçamentos, aceitando também o formato antigo."""
+    dados = repositorio.carregar()
+
+    if dados == []:
+        return []
+
+    # Compatibilidade com o JSON antigo, que armazenava um único orçamento.
+    if isinstance(dados, dict):
+        dados = [dados]
+
+    if not isinstance(dados, list):
+        raise ValueError("O arquivo de dados possui um formato inválido.")
+
+    orcamentos = []
+
+    for item in dados:
+        if not isinstance(item, dict) or "lancamentos" not in item:
+            raise ValueError("Um dos orçamentos salvos possui formato inválido.")
+
+        orcamentos.append(reconstruir_orcamento(item))
+
+    return orcamentos
+
+
+def salvar_dados(orcamento):
+    """Salva um orçamento sem apagar os demais meses cadastrados."""
+    orcamentos = carregar_orcamentos()
+
+    # Remove somente o orçamento do mesmo mês e ano.
+    orcamentos = [
+        existente
+        for existente in orcamentos
+        if (existente.mes, existente.ano) != (orcamento.mes, orcamento.ano)
+    ]
+
+    orcamentos.append(orcamento)
+
+    # Mantém os orçamentos organizados do mais recente para o mais antigo.
+    orcamentos.sort(
+        key=lambda item: (item.ano, item.mes),
+        reverse=True
+    )
+
+    dados = [
+        serializar_orcamento(item)
+        for item in orcamentos
+    ]
+
     repositorio.salvar(dados)
-    print("\nDados salvos com sucesso!")
+    console.print("[green]Dados salvos com sucesso![/green]")
 
 
 def carregar_dados():
-    """Reconstrói os objetos Python a partir do JSON salvo."""
-    dados = repositorio.carregar()
-
-    if not isinstance(dados, dict) or "lancamentos" not in dados:
-        return None
-
+    """Carrega o orçamento mais recente para manter compatibilidade temporária."""
     try:
-        orcamento = OrcamentoMensal(
-            dados["mes"],
-            dados["ano"],
-            dados["orcamento_total"]
+        orcamentos = carregar_orcamentos()
+
+        if not orcamentos:
+            return None
+
+        return max(
+            orcamentos,
+            key=lambda item: (item.ano, item.mes)
         )
 
-        for item in dados["lancamentos"]:
-            info_categoria = item["categoria"]
-
-            categoria = Categoria(
-                nome=info_categoria["nome"],
-                tipo=info_categoria["tipo"],
-                limite_mensal=info_categoria["limite_mensal"],
-                descricao=info_categoria.get("descricao", "")
-            )
-
-            data_lancamento = date.fromisoformat(item["data"])
-
-            if item["tipo"] == "RECEITA":
-                lancamento = Receita(
-                    valor=item["valor"],
-                    categoria=categoria,
-                    data=data_lancamento,
-                    descricao=item["descricao"],
-                    forma_pagamento=item["forma_pagamento"],
-                    _silencioso=True
-                )
-            elif item["tipo"] == "DESPESA":
-                lancamento = Despesa(
-                    valor=item["valor"],
-                    categoria=categoria,
-                    data=data_lancamento,
-                    descricao=item["descricao"],
-                    forma_pagamento=item["forma_pagamento"],
-                    _silencioso=True
-                )
-            else:
-                raise ValueError("Tipo de lançamento inválido no arquivo.")
-
-            orcamento.adicionarLancamento(lancamento)
-
-        return orcamento
-
     except (KeyError, TypeError, ValueError) as erro:
-        print(f"\nNão foi possível carregar os dados: {erro}")
+        console.print(f"\n[red]Não foi possível carregar os dados: {erro}[/red]")
         return None
 
+def selecionar_orcamento():
+    """Permite escolher qual orçamento mensal será acessado."""
+    try:
+        orcamentos = carregar_orcamentos()
+    except (KeyError, TypeError, ValueError) as erro:
+        console.print(
+            f"\n[red]Não foi possível carregar os orçamentos: {erro}[/red]"
+        )
+        return None
+
+    if not orcamentos:
+        console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+        return None
+
+    orcamentos.sort(
+        key=lambda item: (item.ano, item.mes),
+        reverse=True
+    )
+
+    console.print("\n=== SELECIONE O ORÇAMENTO ===")
+
+    for indice, orcamento in enumerate(orcamentos, start=1):
+        mes = MESES[orcamento.mes - 1]
+        console.print(f"{indice}. {mes}/{orcamento.ano}")
+
+    console.print("0. Voltar")
+
+    escolha = ler_inteiro(
+        "Selecione uma opção: ",
+        0,
+        len(orcamentos)
+    )
+
+    if escolha == 0:
+        return None
+
+    return orcamentos[escolha - 1]
 
 
 def adicionar_lancamento(orcamento, tipo):
@@ -367,9 +472,19 @@ def iniciar(
     if orcamento < 0:
         raise typer.BadParameter("O orçamento não pode ser negativo.")
 
-    if repositorio.caminho.exists() and not sobrescrever:
+    orcamentos_existentes = carregar_orcamentos()
+
+    orcamento_existente = next(
+    (
+        item for item in orcamentos_existentes
+        if item.mes == mes and item.ano == ano
+    ),
+    None
+)
+
+    if orcamento_existente is not None and not sobrescrever:
         console.print(
-            "[yellow]Já existe um orçamento cadastrado.[/yellow]"
+            f"[yellow]Já existe um orçamento para {mes:02d}/{ano}.[/yellow]"
         )
         console.print(
             "Use --sobrescrever se realmente deseja substituí-lo."
@@ -381,19 +496,19 @@ def iniciar(
     salvar_dados(novo_orcamento)
 
     console.print(
-        Panel(
-            f"Orçamento de [bold green]R$ {orcamento:.2f}[/bold green] "
-            f"configurado para {mes:02d}/{ano}.",
-            title="Configuração concluída",
-            border_style="green"
+            Panel(
+                f"Orçamento de [bold green]R$ {orcamento:.2f}[/bold green] "
+                f"configurado para {mes:02d}/{ano}.",
+                title="Configuração concluída",
+                border_style="green"
+            )
         )
-    )
 
 @app.command()
 def status():
     """Exibe um resumo do orçamento cadastrado."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print(
@@ -434,7 +549,7 @@ def adicionar_receita(
 ):
     """Cadastra uma nova receita."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print("[red]Nenhum orçamento cadastrado.[/red]")
@@ -511,7 +626,7 @@ def adicionar_despesa(
 ):
     """Cadastra uma nova despesa."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print("[red]Nenhum orçamento cadastrado.[/red]")
@@ -587,7 +702,7 @@ def adicionar_despesa(
 def listar_lancamentos():
     """Lista todas as receitas e despesas cadastradas."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
@@ -628,7 +743,7 @@ def listar_lancamentos():
 def consultar_alertas():
     """Exibe os alertas registrados no orçamento."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
@@ -653,7 +768,7 @@ def consultar_alertas():
 def relatorio_mensal():
     """Exibe o relatório financeiro mensal."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
@@ -666,7 +781,7 @@ def relatorio_mensal():
 def despesas_por_categoria():
     """Exibe as despesas agrupadas por categoria."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
@@ -678,13 +793,150 @@ def despesas_por_categoria():
 def despesas_por_forma_pagamento():
     """Exibe as despesas agrupadas por forma de pagamento."""
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is None:
         console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
         raise typer.Exit(code=1)
 
     RelatorioService.exibir_despesas_por_forma_pagamento(orcamento)
+
+
+@app.command()
+def media_mensal():
+    """Exibe a média financeira dos orçamentos cadastrados."""
+
+    try:
+        orcamentos = carregar_orcamentos()
+
+        if not orcamentos:
+            console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+            raise typer.Exit(code=1)
+
+        resultado = RelatorioService.gerar_media_mensal(orcamentos)
+
+    except (KeyError, TypeError, ValueError) as erro:
+        console.print(f"[red]Não foi possível gerar a média: {erro}[/red]")
+        raise typer.Exit(code=1)
+
+    tabela = Table(title="MÉDIA FINANCEIRA HISTÓRICA")
+    tabela.add_column("Indicador", style="cyan")
+    tabela.add_column("Média", justify="right", style="green")
+
+    tabela.add_row("Meses considerados", str(resultado["quantidade_meses"]))
+    tabela.add_row("Receitas", f"R$ {resultado['media_receitas']:.2f}")
+    tabela.add_row("Despesas", f"R$ {resultado['media_despesas']:.2f}")
+    tabela.add_row("Saldo", f"R$ {resultado['media_saldo']:.2f}")
+
+    console.print(tabela)
+
+
+@app.command()
+def mes_mais_economico():
+    """Identifica o mês com maior saldo financeiro."""
+
+    try:
+        orcamentos = carregar_orcamentos()
+
+        if not orcamentos:
+            console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+            raise typer.Exit(code=1)
+
+        resultado = RelatorioService.gerar_mes_mais_economico(orcamentos)
+
+    except (KeyError, TypeError, ValueError) as erro:
+        console.print(f"[red]Não foi possível gerar o relatório: {erro}[/red]")
+        raise typer.Exit(code=1)
+
+    mes = MESES[resultado["mes"] - 1]
+
+    tabela = Table(title="MÊS MAIS ECONÔMICO")
+    tabela.add_column("Indicador", style="cyan")
+    tabela.add_column("Valor", justify="right", style="green")
+
+    tabela.add_row("Período", f"{mes}/{resultado['ano']}")
+    tabela.add_row("Receitas", f"R$ {resultado['receitas']:.2f}")
+    tabela.add_row("Despesas", f"R$ {resultado['despesas']:.2f}")
+    tabela.add_row("Saldo", f"R$ {resultado['saldo']:.2f}")
+
+    console.print(tabela)
+
+
+@app.command()
+def comparar_despesas():
+    """Compara as despesas dos últimos meses cadastrados."""
+
+    try:
+        configuracao = ConfiguracaoService()
+        quantidade_meses = configuracao.obter("meses_comparacao")
+
+        orcamentos = carregar_orcamentos()
+
+    except (KeyError, TypeError, ValueError) as erro:
+        console.print(f"[red]Não foi possível carregar os dados: {erro}[/red]")
+        raise typer.Exit(code=1)
+
+    orcamentos.sort(key=lambda item: (item.ano, item.mes))
+
+    if len(orcamentos) < quantidade_meses:
+        console.print(
+            f"[yellow]São necessários {quantidade_meses} orçamentos "
+            f"para realizar a comparação. Atualmente existem "
+            f"{len(orcamentos)}.[/yellow]"
+        )
+        raise typer.Exit(code=1)
+
+    orcamentos = orcamentos[-quantidade_meses:]
+
+    console.print(
+        f"\n[bold]COMPARAÇÃO DE DESPESAS — "
+        f"ÚLTIMOS {quantidade_meses} MESES[/bold]"
+    )
+
+    for indice in range(1, len(orcamentos)):
+        anterior = orcamentos[indice - 1]
+        atual = orcamentos[indice]
+
+        resultado = RelatorioService.comparar_despesas(atual, anterior)
+
+        nome_anterior = f"{MESES[anterior.mes - 1]}/{anterior.ano}"
+        nome_atual = f"{MESES[atual.mes - 1]}/{atual.ano}"
+
+        tabela = Table(title=f"{nome_anterior} x {nome_atual}")
+        tabela.add_column("Categoria", style="cyan")
+        tabela.add_column("Anterior", justify="right")
+        tabela.add_column("Atual", justify="right")
+        tabela.add_column("Diferença", justify="right")
+        tabela.add_column("Variação", justify="right")
+
+        if not resultado:
+            tabela.add_row(
+                "Nenhuma despesa registrada",
+                "-", "-", "-", "-"
+            )
+        else:
+            for categoria, valores in sorted(resultado.items()):
+                percentual = valores["variacao_percentual"]
+
+                variacao = (
+                    "Não calculável"
+                    if percentual is None
+                    else f"{percentual:+.2f}%"
+                )
+
+                diferenca = valores["diferenca"]
+                estilo = "red" if diferenca > 0 else "green"
+
+                tabela.add_row(
+                    categoria,
+                    f"R$ {valores['mes_anterior']:.2f}",
+                    f"R$ {valores['mes_atual']:.2f}",
+                    f"[{estilo}]R$ {diferenca:+.2f}[/{estilo}]",
+                    variacao
+                )
+
+        console.print(tabela)
+
 
 def exibir_menu():
     print("\n" + "=" * 42)
@@ -708,7 +960,7 @@ def exibir_menu():
 def main():
     print("Bem-vinda ao Sistema de Controle de Despesas!")
 
-    orcamento = carregar_dados()
+    orcamento = selecionar_orcamento()
 
     if orcamento is not None:
         print(
