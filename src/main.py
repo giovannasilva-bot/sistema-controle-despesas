@@ -674,6 +674,18 @@ def despesas_por_categoria():
 
     RelatorioService.exibir_despesas_por_categoria(orcamento)
 
+@app.command()
+def despesas_por_forma_pagamento():
+    """Exibe as despesas agrupadas por forma de pagamento."""
+
+    orcamento = carregar_dados()
+
+    if orcamento is None:
+        console.print("[yellow]Nenhum orçamento cadastrado.[/yellow]")
+        raise typer.Exit(code=1)
+
+    RelatorioService.exibir_despesas_por_forma_pagamento(orcamento)
+
 def exibir_menu():
     print("\n" + "=" * 42)
     print(" SISTEMA DE CONTROLE DE DESPESAS")
@@ -688,6 +700,7 @@ def exibir_menu():
     print("8 - Salvar dados")
     print("9 - Salvar e sair")
     print("0 - Encerrar sem salvar")
+    print("10 - Despesas por forma de pagamento")
     print("=" * 42)
 
 
@@ -741,6 +754,8 @@ def main():
         elif opcao == "0":
             print("Programa encerrado sem salvar.")
             break
+        elif opcao == "10":
+            RelatorioService.exibir_despesas_por_forma_pagamento(orcamento)
 
         else:
             print("Opção inválida. Escolha uma opção do menu.")

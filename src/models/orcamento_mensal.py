@@ -1,9 +1,10 @@
 from docs.Semana2.modelos import Receita, Despesa
 from src.models.alerta import Alerta
+from src.services.configuracao_service import ConfiguracaoService
 
 
 class OrcamentoMensal:
-    def __init__(self, mes, ano, orcamento_total):
+    def __init__(self, mes, ano, orcamento_total, configuracao=None):
         if mes < 1 or mes > 12:
             raise ValueError("O mês deve estar entre 1 e 12.")
 
@@ -18,6 +19,9 @@ class OrcamentoMensal:
         self.orcamento_total = orcamento_total
         self.lancamentos = []
         self.alertas = []
+        self.configuracao = (
+    configuracao if configuracao is not None else ConfiguracaoService()
+)
 
 
     def adicionarLancamento(self, lancamento):
@@ -28,13 +32,15 @@ class OrcamentoMensal:
             raise ValueError("O lançamento deve pertencer ao mês e ano do orçamento.")
 
         self.lancamentos.append(lancamento)
+        self.atualizarAlertaDeficit()
 
         if isinstance(lancamento, Despesa):
-            if lancamento.valor > 500:
+            limite_alto_valor = self.configuracao.obter("limite_alto_valor")
+            if lancamento.valor > limite_alto_valor:
                 self.alertas.append(
                     Alerta(
                         "ALTO VALOR",
-                        f"Despesa acima de R$ 500,00: R$ {lancamento.valor:.2f}",
+                       f"Despesa acima de R$ {limite_alto_valor:.2f}: R$ {lancamento.valor:.2f}", 
                         lancamento.data,
                         lancamento
                     )
@@ -81,8 +87,30 @@ class OrcamentoMensal:
         return self.calcularReceitas() - self.calcularDespesas()
 
     def verificarDeficit(self):
-        return self.calcularDespesas() > self.orcamento_total
+        return self.calcularSaldo() < 0
+    def atualizarAlertaDeficit(self):
+        alerta_deficit = next(
+            (
+                alerta for alerta in self.alertas
+                if alerta.tipo == "DÉFICIT ORÇAMENTÁRIO"
+            ),
+            None
+        )
 
+        if self.verificarDeficit():
+            if alerta_deficit is None:
+                self.alertas.append(
+                    Alerta(
+                        "DÉFICIT ORÇAMENTÁRIO",
+                        f"Saldo mensal negativo: R$ {self.calcularSaldo():.2f}"
+                    )
+                )
+            else:
+                alerta_deficit.mensagem = (
+                    f"Saldo mensal negativo: R$ {self.calcularSaldo():.2f}"
+                )
+        elif alerta_deficit is not None:
+            self.alertas.remove(alerta_deficit)
     def __str__(self):
         return (
             f"Orçamento {self.mes:02d}/{self.ano} | "

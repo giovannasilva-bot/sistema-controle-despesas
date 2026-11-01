@@ -1,4 +1,5 @@
 from src.models.orcamento_mensal import OrcamentoMensal
+from docs.Semana2.modelos import Despesa
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -41,6 +42,20 @@ class RelatorioService:
                 despesas_por_categoria[categoria] += lancamento.valor
 
         return despesas_por_categoria
+    @staticmethod
+    def gerar_despesas_por_forma_pagamento(orcamento: OrcamentoMensal):
+        despesas_por_forma = {}
+
+        for lancamento in orcamento.lancamentos:
+            if isinstance(lancamento, Despesa):
+                forma = lancamento.forma_pagamento
+
+                if forma not in despesas_por_forma:
+                    despesas_por_forma[forma] = 0
+
+                despesas_por_forma[forma] += lancamento.valor
+
+        return despesas_por_forma
 
     @staticmethod
     def exibir_relatorio_mensal(orcamento: OrcamentoMensal):
@@ -77,6 +92,26 @@ class RelatorioService:
 
         for categoria, valor in despesas.items():
             tabela.add_row(categoria, f"R$ {valor:.2f}")
+
+        console.print(tabela)
+        
+    @staticmethod
+    def exibir_despesas_por_forma_pagamento(orcamento: OrcamentoMensal):
+        despesas = RelatorioService.gerar_despesas_por_forma_pagamento(
+            orcamento
+        )
+
+        if not despesas:
+            console.print("[yellow]Nenhuma despesa cadastrada.[/yellow]")
+            return
+
+        tabela = Table(title="Despesas por forma de pagamento")
+
+        tabela.add_column("Forma de pagamento", style="cyan")
+        tabela.add_column("Valor", justify="right", style="green")
+
+        for forma, valor in despesas.items():
+            tabela.add_row(forma, f"R$ {valor:.2f}")
 
         console.print(tabela)
 

@@ -108,4 +108,14 @@ def test_media_mensal_sem_orcamentos():
     except ValueError:
         assert True
 
+def test_gerar_despesas_por_forma_pagamento():
+    orcamento = criar_orcamento_outubro()
 
+    resultado = RelatorioService.gerar_despesas_por_forma_pagamento(
+        orcamento
+    )
+
+    assert resultado == {
+        "Cartão": 500,
+        "Dinheiro": 300
+    }

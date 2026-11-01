@@ -82,8 +82,19 @@ def test_verificar_deficit():
     orcamento.adicionarLancamento(receita)
     orcamento.adicionarLancamento(despesa)
 
-    assert orcamento.verificarDeficit() is True
+    assert orcamento.verificarDeficit() is False
 
+def test_verificar_deficit_com_saldo_negativo():
+    receita, despesa = criar_lancamentos()
+
+    despesa.valor = 3500
+
+    orcamento = OrcamentoMensal(10, 2026, 400)
+
+    orcamento.adicionarLancamento(receita)
+    orcamento.adicionarLancamento(despesa)
+
+    assert orcamento.verificarDeficit() is True
 
 def test_rejeitar_lancamento_de_outro_mes():
     categoria = Categoria(nome="Alimentação", tipo="DESPESA")
