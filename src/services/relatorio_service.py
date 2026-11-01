@@ -94,7 +94,7 @@ class RelatorioService:
             tabela.add_row(categoria, f"R$ {valor:.2f}")
 
         console.print(tabela)
-        
+
     @staticmethod
     def exibir_despesas_por_forma_pagamento(orcamento: OrcamentoMensal):
         despesas = RelatorioService.gerar_despesas_por_forma_pagamento(
@@ -163,7 +163,24 @@ class RelatorioService:
             "media_despesas": total_despesas / quantidade,
             "media_saldo": total_saldo / quantidade
         }
+    @staticmethod
+    def gerar_mes_mais_economico(orcamentos: list[OrcamentoMensal]):
+        if not orcamentos:
+            raise ValueError("É necessário informar pelo menos um orçamento.")
 
+        melhor_orcamento = max(
+            orcamentos,
+            key=lambda orcamento: orcamento.calcularSaldo()
+        )
+
+        return {
+            "mes": melhor_orcamento.mes,
+            "ano": melhor_orcamento.ano,
+            "receitas": melhor_orcamento.calcularReceitas(),
+            "despesas": melhor_orcamento.calcularDespesas(),
+            "saldo": melhor_orcamento.calcularSaldo()
+        
+        }
     @staticmethod
     def comparar_despesas(orcamento_atual: OrcamentoMensal,
                           orcamento_anterior: OrcamentoMensal):

@@ -69,7 +69,6 @@ def test_gerar_top_categorias():
         ("Transporte", 300)
     ]
 
-
 def test_gerar_media_mensal():
     outubro = criar_orcamento_outubro()
     novembro = criar_orcamento_novembro()
@@ -119,3 +118,17 @@ def test_gerar_despesas_por_forma_pagamento():
         "Cartão": 500,
         "Dinheiro": 300
     }
+
+def test_gerar_mes_mais_economico():
+    outubro = criar_orcamento_outubro()
+    novembro = criar_orcamento_novembro()
+
+    resultado = RelatorioService.gerar_mes_mais_economico(
+        [outubro, novembro]
+    )
+
+    assert resultado["mes"] == 11
+    assert resultado["ano"] == 2026
+    assert resultado["receitas"] == 3500
+    assert resultado["despesas"] == 800
+    assert resultado["saldo"] == 2700
