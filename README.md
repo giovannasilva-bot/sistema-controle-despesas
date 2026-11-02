@@ -216,15 +216,23 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
+### Instalar as dependências
+
+Com o ambiente virtual ativado, execute:
+
+```powershell
+python -m pip install typer rich
+```
+
 ### Executar a aplicação
 
 Na raiz do projeto, execute:
 
-```bash
-python -m src.main
+```powershell
+python -m src.main --help
 ```
 
-A aplicação apresentará o menu interativo para utilização das funcionalidades do sistema.
+Esse comando apresenta a lista de funcionalidades disponíveis. Cada funcionalidade pode ser executada informando seu respectivo comando, conforme apresentado na seção 15.
 
 ## 12. Testes automatizados
 
