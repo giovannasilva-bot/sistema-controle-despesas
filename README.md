@@ -146,6 +146,7 @@ As configurações gerais do sistema são armazenadas em `settings.json` e geren
 sistema-controle-despesas/
 |
 |-- README.md
+|-- seed.py
 |-- settings.json
 |
 |-- data/                         (criada localmente)
@@ -221,8 +222,22 @@ python -m venv .venv
 Com o ambiente virtual ativado, execute:
 
 ```powershell
-python -m pip install typer rich
+python -m pip install typer rich pytest
 ```
+
+### Preparar os arquivos iniciais
+
+Antes de executar o sistema pela primeira vez, utilize:
+
+```powershell
+python seed.py
+```
+
+O script cria o arquivo `settings.json` com as configurações padrão e o arquivo `data/orcamento.json` com dados fictícios de demonstração, caso eles ainda não existam.
+
+Se os arquivos já existirem, o script os preserva, evitando sobrescrever configurações ou dados cadastrados pelo usuário.
+
+Essa etapa permite preparar o ambiente para demonstração e utilização do sistema sem a necessidade de cadastrar manualmente todos os dados iniciais.
 
 ### Executar a aplicação
 
@@ -262,7 +277,6 @@ Os arquivos referentes à modelagem UML estão disponíveis em `docs/Semana1/`:
 
 ---
 
-Projeto acadêmico desenvolvido para a disciplina de Programação Orientada a Objetos (POO) — Engenharia de Software, UFCA.
 
 ## 14. Versionamento
 
@@ -392,3 +406,6 @@ python -m src.main comparar-despesas
 Os comandos que trabalham com um orçamento específico podem solicitar a seleção do período desejado. Já as análises históricas consideram os orçamentos cadastrados.
 
 Os exemplos de cadastro são ilustrativos. Antes de executar, verifique os dados para evitar registros duplicados ou alterações indesejadas.
+
+Projeto acadêmico desenvolvido para a disciplina de Programação Orientada a Objetos (POO) — Engenharia de Software, UFCA.
+
